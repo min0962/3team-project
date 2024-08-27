@@ -41,6 +41,8 @@ dependencies {
 	testImplementation("org.junit.vintage:junit-vintage-engine") {
 		exclude group: "org.hamcrest", module: "hamcrest-core"
 	}
+	// Google Cloud Vision API 클라이언트 라이브러리
+	implementation 'com.google.cloud:google-cloud-vision:3.34.0'
 
 }
 
