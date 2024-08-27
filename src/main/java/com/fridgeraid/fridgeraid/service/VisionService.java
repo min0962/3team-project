@@ -12,15 +12,13 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.web.multipart.MultipartFile;
+
 @Service
 public class VisionService {
 
-    public String extractTextFromImageUrl(String imageUrl) throws Exception {
-        URL url = new URL(imageUrl);
-        ByteString imgBytes;
-        try (InputStream in = url.openStream()) {
-            imgBytes = ByteString.readFrom(in);
-        }
+    public String extractTextFromImageFile(MultipartFile imageFile) throws Exception {
+        ByteString imgBytes = ByteString.readFrom(imageFile.getInputStream());
 
         Image img = Image.newBuilder().setContent(imgBytes).build();
         Feature feat = Feature.newBuilder().setType(Feature.Type.TEXT_DETECTION).build();
