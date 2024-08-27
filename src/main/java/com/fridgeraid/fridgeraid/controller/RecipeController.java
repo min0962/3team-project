@@ -38,4 +38,6 @@ public class RecipeController {
         String response = recipeService.getRecommendationByFridgeItems(deviceId);
         return ResponseEntity.ok(response);
     }
+
+
 }
