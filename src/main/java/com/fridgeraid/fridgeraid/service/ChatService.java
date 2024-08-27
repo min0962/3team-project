@@ -1,52 +1,59 @@
 package com.fridgeraid.fridgeraid.service;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.RequestEntity;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class ChatService {
 
-    @Value("${school.api.key}")
-    private String apiKey;
+    @Value("${openai.api.key}")
+    private String key;
 
     public String getChatResponse(String message) {
         RestTemplate restTemplate = new RestTemplate();
 
         URI uri = UriComponentsBuilder
-                .fromUriString("https://cesrv.hknu.ac.kr/srv/gpt")
+                .fromUriString("https://api.openai.com/v1/chat/completions")
                 .build()
                 .encode()
                 .toUri();
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-Type", "application/json; utf-8");
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("Authorization", "Bearer " + key);
 
-        // JSON 형식의 요청 바디 구성
-        JSONObject jsonBody = new JSONObject();
-        jsonBody.put("service", "gpt");
-        jsonBody.put("question", message);
-        jsonBody.put("hash", apiKey);
+        ArrayList<Message> list = new ArrayList<>();
+        list.add(new Message("user", message));
 
-        RequestEntity<String> request = new RequestEntity<>(jsonBody.toString(), headers, HttpMethod.POST, uri);
+        Body body = new Body("gpt-3.5-turbo", list);
 
-        ResponseEntity<String> response = restTemplate.exchange(request, String.class);
+        RequestEntity<Body> httpEntity = new RequestEntity<>(body, httpHeaders, HttpMethod.POST, uri);
 
-        if (response.getStatusCode() == HttpStatus.OK) {
-            return response.getBody();
-        } else {
-            return "Error: " + response.getStatusCode();
-        }
+        ResponseEntity<String> exchange = restTemplate.exchange(httpEntity, String.class);
+        return exchange.getBody();
+    }
+
+    @AllArgsConstructor
+    @Data
+    static class Body {
+        String model;
+        List<Message> messages;
+    }
+
+    @AllArgsConstructor
+    @Data
+    static class Message {
+        String role;
+        String content;
     }
 }

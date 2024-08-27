@@ -6,7 +6,6 @@ import com.fridgeraid.fridgeraid.Repository.FoodItemRepository;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -21,8 +20,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RecipeService {
 
-    @Value("${school.api.key}")
-    private String apiKey;
+    @Value("${openai.api.key}")
+    private String key;
 
     private final FoodItemRepository foodItemRepository;
 
@@ -55,45 +54,65 @@ public class RecipeService {
         RestTemplate restTemplate = new RestTemplate();
 
         URI uri = UriComponentsBuilder
-                .fromUriString("https://cesrv.hknu.ac.kr/srv/gpt")
+                .fromUriString("https://api.openai.com/v1/chat/completions")
                 .build()
                 .encode()
                 .toUri();
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("Authorization", "Bearer " + key);
 
-        // JSON 형식의 요청 바디 구성
-        JSONObject jsonBody = new JSONObject();
-        jsonBody.put("service", "gpt");
-        jsonBody.put("question", message);
-        jsonBody.put("hash", apiKey);
+        ArrayList<Message> list = new ArrayList<>();
+        list.add(new Message("user", message));
 
-        RequestEntity<String> request = new RequestEntity<>(jsonBody.toString(), headers, HttpMethod.POST, uri);
+        Body body = new Body("gpt-3.5-turbo", list);
 
-        ResponseEntity<String> response = restTemplate.exchange(request, String.class);
+        RequestEntity<Body> httpEntity = new RequestEntity<>(body, httpHeaders, HttpMethod.POST, uri);
+
+        ResponseEntity<String> exchange = restTemplate.exchange(httpEntity, String.class);
 
         // 응답 내용 로그 출력
-        System.out.println("School API Response: " + response.getBody());
+        System.out.println("OpenAI API Response: " + exchange.getBody());
 
-        return response.getBody();
+        return exchange.getBody();
     }
 
     private String parseChatGptResponse(String responseBody) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             JsonNode root = objectMapper.readTree(responseBody);
+            JsonNode choices = root.path("choices");
+            if (choices.isArray() && choices.size() > 0) {
+                JsonNode messageContent = choices.get(0).path("message").path("content");
+                String jsonString = messageContent.asText();
 
-            // 응답이 바로 JSON 형식이라면 바로 반환, 아니라면 특정 필드를 찾아야 할 수도 있음
-            if (root.isObject() || root.isArray()) {
-                return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(root);
+                // JSON 문자열 로그 출력
+                System.out.println("JSON String: " + jsonString);
+
+                // JSON 문자열에서 이스케이프 문자 제거
+                jsonString = jsonString.replace("\\n", "").replace("\\\"", "\"").replace("\\\\", "\\");
+
+                // JSON 문자열을 다시 JSON 객체로 변환하여 보기 좋게 포맷
+                JsonNode formattedJson = objectMapper.readTree(jsonString);
+                return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(formattedJson);
             }
-
-            // JSON 형식이 아니라고 가정하고 기본 문자열을 반환
-            return responseBody;
         } catch (Exception e) {
             e.printStackTrace();
         }
         return "Error parsing response";
+    }
+
+    @AllArgsConstructor
+    @Data
+    static class Body {
+        String model;
+        List<Message> messages;
+    }
+
+    @AllArgsConstructor
+    @Data
+    static class Message {
+        String role;
+        String content;
     }
 }
