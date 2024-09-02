@@ -24,7 +24,7 @@ public class ConsumptionRecordController {
         return consumptionRecordService.findConsumptionRecordsByMonth(deviceId, year, month);
     }
 
-    // 월별 및 소비 유형별 조회 (이름, 수량, 가격)
+    // 월별 및 소비 유형별 조회 (이름, 수량, 단가)
     @GetMapping("/{deviceId}/month/type")
     public List<Object[]> getMonthlyConsumptionByType(
             @PathVariable String deviceId,

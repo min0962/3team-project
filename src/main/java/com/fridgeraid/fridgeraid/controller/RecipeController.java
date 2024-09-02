@@ -39,5 +39,17 @@ public class RecipeController {
         return ResponseEntity.ok(response);
     }
 
+    // 재료 이름을 받아 손질 방법 반환
+    @PostMapping("/handling")
+    public ResponseEntity<String> getHandlingMethod(@RequestParam String name) {
+        String response = recipeService.getHandlingMethod(name);
+        return ResponseEntity.ok(response);
+    }
 
+    // 재료 이름을 받아 보관 방법 반환
+    @PostMapping("/storage")
+    public ResponseEntity<String> getStorageMethod(@RequestParam String name) {
+        String response = recipeService.getStorageMethod(name);
+        return ResponseEntity.ok(response);
+    }
 }

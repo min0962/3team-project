@@ -42,7 +42,7 @@ public class ConsumptionRecordRepository {
                 .getResultList();
     }
 
-    // 월별 및 소비 유형별 조회 (이름, 수량, 단위 가격)
+    // 월별 및 소비 유형별 조회 (이름, 수량, 단위 가격, 총 가격)
     public List<Object[]> findCrByMonthAndType(String deviceId, int year, int month, ConsumptionType consumptionType) {
         LocalDate startDate = LocalDate.of(year, month, 1);
         LocalDate endDate = startDate.plusMonths(1).minusDays(1);
@@ -50,11 +50,11 @@ public class ConsumptionRecordRepository {
         LocalDateTime startDateTime = startDate.atStartOfDay();
         LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
 
-        return em.createQuery("select c.foodName, sum(c.quantity), sum(c.price) from ConsumptionRecord c " +
+        return em.createQuery("select c.foodName, c.quantity, c.price, CAST(c.quantity * c.price AS integer) as totalCost " +
+                                "from ConsumptionRecord c " +
                                 "where c.deviceId = :deviceId " +
                                 "and c.consumptionType = :consumptionType " +
-                                "and c.consumptionDate between :startDateTime and :endDateTime " +
-                                "group by c.foodName",
+                                "and c.consumptionDate between :startDateTime and :endDateTime",
                         Object[].class)
                 .setParameter("deviceId", deviceId)
                 .setParameter("consumptionType", consumptionType)
@@ -62,5 +62,6 @@ public class ConsumptionRecordRepository {
                 .setParameter("endDateTime", endDateTime)
                 .getResultList();
     }
+
 
 }
