@@ -4,6 +4,7 @@ import com.fridgeraid.fridgeraid.domain.ConsumptionRecord;
 import com.fridgeraid.fridgeraid.domain.ConsumptionType;
 import com.fridgeraid.fridgeraid.service.ConsumptionRecordService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,5 +33,25 @@ public class ConsumptionRecordController {
             @RequestParam int month,
             @RequestParam ConsumptionType consumptionType) {
         return consumptionRecordService.getMonthlyConsumptionByType(deviceId, year, month, consumptionType);
+    }
+
+    // 월별 소비 및 지출 분석
+    @GetMapping("/{deviceId}/month/consumption-analysis")
+    public ResponseEntity<String> analyzeMonthlyConsumption(
+            @PathVariable String deviceId,
+            @RequestParam int year,
+            @RequestParam int month) {
+        String response = consumptionRecordService.analyzeMonthlyConsumption(deviceId, year, month);
+        return ResponseEntity.ok(response);
+    }
+
+    // 월별 폐기물 분석
+    @GetMapping("/{deviceId}/month/waste-analysis")
+    public ResponseEntity<String> analyzeMonthlyWaste(
+            @PathVariable String deviceId,
+            @RequestParam int year,
+            @RequestParam int month) {
+        String response = consumptionRecordService.analyzeMonthlyWaste(deviceId, year, month);
+        return ResponseEntity.ok(response);
     }
 }
