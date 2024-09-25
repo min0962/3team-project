@@ -30,25 +30,30 @@ public class FoodItemController {
         return foodeItemService.findFoodItemsByStorageMethod(deviceId, storageMethod);
     }
 
-    // 식품 추가
+    // 단일 식품 추가
     @PostMapping
     public Integer addFoodItem(@RequestBody FoodItem foodItem) {
         return foodeItemService.addFoodItem(foodItem);
     }
 
+    // 여러 개의 식품 추가
+    @PostMapping("/list")
+    public void addFoodItems(@RequestBody List<FoodItem> foodItems) {
+        foodeItemService.addFoodItems(foodItems);
+    }
+
     // 식품 삭제
-    @DeleteMapping("/{foodItemId}")
-    public void deleteFoodItem(@PathVariable Integer foodItemId) {
+    @DeleteMapping("/delete")
+    public void deleteFoodItem(@RequestParam Integer foodItemId) {
         foodeItemService.deleteFoodItem(foodItemId);
     }
 
     // 식품 수량 업데이트 + 소비 DB에 추가
-    @PutMapping("/{foodItemId}/quantity")
+    @PutMapping("/quantity")
     public void updateFoodItemQuantity(
-            @PathVariable Integer foodItemId,
+            @RequestParam Integer foodItemId,
             @RequestParam BigDecimal quantityToUpdate,
             @RequestParam ConsumptionType consumptionType) {
         foodeItemService.updateFoodItemQuantity(foodItemId, quantityToUpdate, consumptionType);
     }
 }
-

@@ -25,7 +25,7 @@ public class FoodItem {
     private String foodName;
 
     @Column(name = "price")
-    private Integer price;
+    private Integer price = 0;
 
     @Column(name = "quantity")
     private BigDecimal quantity;

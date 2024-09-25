@@ -30,6 +30,9 @@ public class ConsumptionRecord {
     @Column(name = "quantity")
     private BigDecimal quantity;
 
+    @Column(name = "food_id")
+    private Integer foodId;
+
     @Column(name = "consumption_date")
     private LocalDateTime consumptionDate;
 

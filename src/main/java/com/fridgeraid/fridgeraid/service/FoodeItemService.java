@@ -32,11 +32,19 @@ public class FoodeItemService {
         return foodItemRepository.findByDeviceNameAndStorageMethod(deviceId, storageMethod);
     }
 
-    // 식품 추가
+    // 단일 식품 추가
     @Transactional
     public Integer addFoodItem(FoodItem foodItem) {
         foodItemRepository.save(foodItem);
         return foodItem.getFoodId();
+    }
+
+    // 여러 개의 식품 추가
+    @Transactional
+    public void addFoodItems(List<FoodItem> foodItems) {
+        for (FoodItem foodItem : foodItems) {
+            foodItemRepository.save(foodItem);
+        }
     }
 
     // 식품 삭제
@@ -49,24 +57,49 @@ public class FoodeItemService {
     @Transactional
     public void updateFoodItemQuantity(Integer foodItemId, BigDecimal quantityToUpdate, ConsumptionType consumptionType) {
         FoodItem foodItem = foodItemRepository.findByFoodId(foodItemId);
+
         if (foodItem != null) {
             BigDecimal updatedQuantity = foodItem.getQuantity().subtract(quantityToUpdate);
+
             if (updatedQuantity.compareTo(BigDecimal.ZERO) < 0) {
                 throw new IllegalArgumentException("수량이 부족합니다.");
             }
-            foodItem.setQuantity(updatedQuantity);
-            foodItemRepository.save(foodItem);
 
-            // 소비 기록 추가
-            ConsumptionRecord consumptionRecord = new ConsumptionRecord();
-            consumptionRecord.setDeviceId(foodItem.getDeviceId());
-            consumptionRecord.setFoodName(foodItem.getFoodName());
-            consumptionRecord.setPrice(foodItem.getPrice());
-            consumptionRecord.setQuantity(quantityToUpdate);
-            consumptionRecord.setConsumptionDate(LocalDateTime.now());
-            consumptionRecord.setConsumptionType(consumptionType);
+            // 수량이 0이면 식품 삭제
+            if (updatedQuantity.compareTo(BigDecimal.ZERO) == 0) {
+                foodItemRepository.deleteByFoodId(foodItemId);
+            } else {
+                foodItem.setQuantity(updatedQuantity);
+                foodItemRepository.save(foodItem);
+            }
 
-            consumptionRecordRepository.save(consumptionRecord);
+            // 소비 기록 업데이트
+            List<ConsumptionRecord> existingRecords = consumptionRecordRepository.findCrByDeviceId(foodItem.getDeviceId());
+
+            boolean recordFound = false;
+            for (ConsumptionRecord record : existingRecords) {
+                if (record.getFoodId().equals(foodItemId)) {
+                    // 기존 기록이 있다면 수량 업데이트
+                    record.setQuantity(record.getQuantity().add(quantityToUpdate));
+                    consumptionRecordRepository.save(record);
+                    recordFound = true;
+                    break;
+                }
+            }
+
+            // 기존 기록이 없으면 새 기록 추가
+            if (!recordFound) {
+                ConsumptionRecord newRecord = new ConsumptionRecord();
+                newRecord.setDeviceId(foodItem.getDeviceId());
+                newRecord.setFoodName(foodItem.getFoodName());
+                newRecord.setPrice(foodItem.getPrice());
+                newRecord.setQuantity(quantityToUpdate);
+                newRecord.setConsumptionDate(LocalDateTime.now());
+                newRecord.setConsumptionType(consumptionType);
+                newRecord.setFoodId(foodItemId); // 새로 추가된 필드
+
+                consumptionRecordRepository.save(newRecord);
+            }
         } else {
             throw new IllegalArgumentException("해당 ID의 식품이 존재하지 않습니다.");
         }

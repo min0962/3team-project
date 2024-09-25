@@ -33,7 +33,7 @@ public class RecipeController {
     }
 
     // 냉장고 속 재료로 메뉴 추천
-    @GetMapping("/recommendation/{deviceId}")
+    @GetMapping("/recommendation")
     public ResponseEntity<String> getRecommendationByFridgeItems(@PathVariable String deviceId) {
         String response = recipeService.getRecommendationByFridgeItems(deviceId);
         return ResponseEntity.ok(response);
