@@ -140,6 +140,28 @@ public class RecipeService {
         return parseTextResponse(getChatGptResponse(prompt, null));  // temperature는 null로 유지
     }
 
+    // 레시피 변형 요청 메소드
+    public String modifyRecipeWithFridgeItems(String deviceId, String recipe) {
+        // 냉장고 속 재료 가져오기
+        List<Object[]> fridgeItems = foodItemRepository.findNameAndQuantityByDeviceId(deviceId);
+        StringBuilder fridgeIngredients = new StringBuilder();
+
+        // 냉장고에 있는 재료를 StringBuilder로 구성
+        for (Object[] item : fridgeItems) {
+            fridgeIngredients.append(item[0]).append(" (").append(item[1]).append("), ");
+        }
+
+        // GPT에게 보낼 프롬프트 생성
+        String prompt = "Here is the recipe: \"" + recipe +
+                "\". Please adjust this recipe so that I can make it using only the following ingredients from my fridge: " +
+                fridgeIngredients.toString() +
+                ". Use only these ingredients and adjust the recipe accordingly. Provide the instructions and ingredients list **in Korean**. Make sure to include only necessary ingredients and exclude others.";
+
+        // GPT에게 요청
+        return parseTextResponse(getChatGptResponse(prompt, 1.0));  // 적절한 temperature 설정
+    }
+
+
     @AllArgsConstructor
     @Data
     static class Body {

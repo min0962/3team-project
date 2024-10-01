@@ -45,6 +45,9 @@ dependencies {
 	implementation 'com.google.cloud:google-cloud-vision:3.34.0'
 	implementation 'org.json:json:20230227'
 	implementation 'org.apache.httpcomponents.client5:httpclient5:5.1'
+
+	//크롤링
+	implementation 'org.jsoup:jsoup:1.15.3'
 }
 
 tasks.named('test') {

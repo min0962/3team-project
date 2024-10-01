@@ -52,4 +52,11 @@ public class RecipeController {
         String response = recipeService.getStorageMethod(name);
         return ResponseEntity.ok(response);
     }
+
+    // 레시피 변형 (냉장고 재료를 기반으로 레시피 변형)
+    @PostMapping("/modify")
+    public ResponseEntity<String> modifyRecipeWithFridgeItems(@RequestParam String deviceId, @RequestParam String recipe) {
+        String response = recipeService.modifyRecipeWithFridgeItems(deviceId, recipe);
+        return ResponseEntity.ok(response);
+    }
 }
