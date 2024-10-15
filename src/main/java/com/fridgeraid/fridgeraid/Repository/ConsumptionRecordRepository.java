@@ -62,6 +62,14 @@ public class ConsumptionRecordRepository {
                 .setParameter("endDateTime", endDateTime)
                 .getResultList();
     }
+    // deviceId, foodId, consumptionType을 기반으로 소비 기록 조회
+    public List<ConsumptionRecord> findCrByDeviceIdAndFoodIdAndConsumptionType(String deviceId, Integer foodId, ConsumptionType consumptionType) {
+        return em.createQuery("SELECT cr FROM ConsumptionRecord cr WHERE cr.deviceId = :deviceId AND cr.foodId = :foodId AND cr.consumptionType = :consumptionType", ConsumptionRecord.class)
+                .setParameter("deviceId", deviceId)
+                .setParameter("foodId", foodId)
+                .setParameter("consumptionType", consumptionType)
+                .getResultList();
+    }
 
 
 }

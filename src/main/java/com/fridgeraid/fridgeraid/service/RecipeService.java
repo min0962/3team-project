@@ -11,10 +11,14 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.HashMap;
+import java.util.Map;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import org.json.JSONObject;
 
 @Service
 @RequiredArgsConstructor
@@ -117,16 +121,20 @@ public class RecipeService {
         return parseJsonResponse(getChatGptResponse(prompt, 1.3));
     }
 
-    // 냉장고 속 재료로 메뉴 추천 (temperature 적용)
+    // 냉장고 속 재료로 메뉴 추천
     public String getRecommendationByFridgeItems(String deviceId) {
         List<Object[]> items = foodItemRepository.findNameAndQuantityByDeviceId(deviceId);
-        StringBuilder prompt = new StringBuilder("Based on the following ingredients in my fridge, suggest 3 unique and diverse Korean recipes using only these ingredients and common seasonings in the following JSON format: [\"요리1\", \"요리2\", \"요리3\"]. Ingredients: ");
+        StringBuilder prompt = new StringBuilder("내 냉장고에 있는 재료로 만들 수 있는 요리 3개를 추천해주세요. ");
+        prompt.append("재료는 다음과 같습니다: ");
         for (Object[] item : items) {
             prompt.append(item[0]).append(" (").append(item[1]).append("), ");
         }
-        prompt.append("Ensure the response strictly follows this format and includes exactly 3 different recipes.");
-        return parseJsonResponse(getChatGptResponse(prompt.toString(), 1.3));
+        prompt.append("위 재료들만을 사용하고, 정확히 3개의 요리 이름만 JSON 형식으로 [\"요리1\", \"요리2\", \"요리3\"]로 출력해주세요. 다른 설명은 필요 없습니다.");
+
+        return parseJsonResponse(getChatGptResponse(prompt.toString(), 0.0));
     }
+
+
 
     // 재료 손질 방법 반환 (변경 없음)
     public String getHandlingMethod(String ingredient) {
@@ -141,7 +149,7 @@ public class RecipeService {
     }
 
     // 레시피 변형 요청 메소드
-    public String modifyRecipeWithFridgeItems(String deviceId, String recipe) {
+    public String modifyRecipeWithFridgeItems(String deviceId, String recipe, String menu) {
         // 냉장고 속 재료 가져오기
         List<Object[]> fridgeItems = foodItemRepository.findNameAndQuantityByDeviceId(deviceId);
         StringBuilder fridgeIngredients = new StringBuilder();
@@ -152,13 +160,34 @@ public class RecipeService {
         }
 
         // GPT에게 보낼 프롬프트 생성
-        String prompt = "Here is the recipe: \"" + recipe +
-                "\". Please adjust this recipe so that I can make it using only the following ingredients from my fridge: " +
-                fridgeIngredients.toString() +
-                ". Use only these ingredients and adjust the recipe accordingly. Provide the instructions and ingredients list **in Korean**. Make sure to include only necessary ingredients and exclude others.";
+        String prompt = "The menu is \"" + menu + "\", and its recipe is as follows: \"" + recipe +
+                "\". Please modify this recipe so that it can be made using only the ingredients from my fridge. " +
+                "Here are the ingredients I have: " + fridgeIngredients.toString() +
+                ". Adjust the recipe accordingly using only these ingredients. Provide the instructions and ingredients list **in Korean**. " +
+                "Ensure to include only the necessary ingredients and exclude others.";
 
         // GPT에게 요청
         return parseTextResponse(getChatGptResponse(prompt, 1.0));  // 적절한 temperature 설정
+    }
+
+    // 사용한 재료 반환
+    public String parseIngredientsToJson(String ingredientsSection) {
+        // 각 재료와 양을 추출하는 정규 표현식
+        Pattern ingredientPattern = Pattern.compile("-\\s*([^\\d-]+)\\s+([\\d\\.]+)");
+        Matcher ingredientMatcher = ingredientPattern.matcher(ingredientsSection);
+
+        // Map을 사용하여 재료와 양을 저장
+        Map<String, String> ingredientsMap = new HashMap<>();
+
+        while (ingredientMatcher.find()) {
+            String ingredient = ingredientMatcher.group(1).trim();
+            String amount = ingredientMatcher.group(2).trim();
+            ingredientsMap.put(ingredient, amount);
+        }
+
+        // Map을 JSONObject로 변환하여 JSON 형태로 출력
+        JSONObject jsonObject = new JSONObject(ingredientsMap);
+        return jsonObject.toString(4);  // 들여쓰기 4로 포맷된 JSON 반환
     }
 
 

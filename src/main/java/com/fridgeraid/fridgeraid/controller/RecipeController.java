@@ -33,7 +33,7 @@ public class RecipeController {
     }
 
     // 냉장고 속 재료로 메뉴 추천
-    @GetMapping("/recommendation")
+    @GetMapping("/recommendation/{deviceId}")
     public ResponseEntity<String> getRecommendationByFridgeItems(@PathVariable String deviceId) {
         String response = recipeService.getRecommendationByFridgeItems(deviceId);
         return ResponseEntity.ok(response);
@@ -55,8 +55,15 @@ public class RecipeController {
 
     // 레시피 변형 (냉장고 재료를 기반으로 레시피 변형)
     @PostMapping("/modify")
-    public ResponseEntity<String> modifyRecipeWithFridgeItems(@RequestParam String deviceId, @RequestParam String recipe) {
-        String response = recipeService.modifyRecipeWithFridgeItems(deviceId, recipe);
+    public ResponseEntity<String> modifyRecipeWithFridgeItems(@RequestParam String deviceId, @RequestParam String recipe, @RequestParam String menu) {
+        String response = recipeService.modifyRecipeWithFridgeItems(deviceId, recipe, menu);
+        return ResponseEntity.ok(response);
+    }
+
+    // 재료 문자열을 받아 JSON으로 반환하는 메소드
+    @PostMapping("/parse-ingredients")
+    public ResponseEntity<String> parseIngredients(@RequestParam String ingredientsSection) {
+        String response = recipeService.parseIngredientsToJson(ingredientsSection);
         return ResponseEntity.ok(response);
     }
 }
